@@ -3,100 +3,93 @@ package freshco.Model;
 import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
+
 import freshco.Beans.Category;
 
-
 public class CategoryDBUtil {
-	
-	
 
 	// Get all categories from the database
+	public static List<Category> getAllCategories() throws Exception {
+		List<Category> categories = new ArrayList<>();// List to store Category objects
+		String query = "SELECT * FROM Category";
 
-    public static List<Category> getAllCategories() throws Exception {
-        List<Category> categories = new ArrayList<>();// List to store Category objects
-        String query = "SELECT * FROM Category";  
+		try {
+			ResultSet rs = webDB.executeSearch(query); // Execute query to get categories from DB
 
-        try {
-            ResultSet rs = webDB.executeSearch(query);  // Execute query to get categories from DB
-        
-            while (rs.next()) {
-                Category category = new Category(
-                    rs.getInt("CID"),
-                    rs.getString("category_Name"), 
-                    rs.getString("imgUrl")
-                   
-                );
-                categories.add(category);
-            }
-            rs.close();   
-        } catch (Exception e) {
-            e.printStackTrace();  
-            throw e;  
-        }
-        return categories;
-    }
+			while (rs.next()) {
+				Category category = new Category(
+						rs.getInt("CID"),
+						rs.getString("category_Name"),
+						rs.getString("imgUrl")
 
-    // Insert a new category
-    public static boolean insertCategory(String category_Name, String imgUrl, int ID) {
-        boolean isSuccess = false;
+				);
+				categories.add(category);
+			}
+			rs.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
+		}
+		return categories;
+	}
 
-        // SQL query to insert into the Category table
-        String queryCategory = "INSERT INTO Category (category_Name, ImgUrl) VALUES ('" + category_Name + "', '" + imgUrl + "')";
+	// Insert a new category
+	public static boolean insertCategory(String category_Name, String imgUrl, int ID) {
+		boolean isSuccess = false;
 
-        try {
-            // Execute the insert query for the Category
-            int rowsAffected = webDB.executeIUD(queryCategory);
+		// SQL query to insert into the Category table
+		String sqlCategory = "INSERT INTO Category (category_Name, ImgUrl) VALUES (?, ?)";
 
-            if (rowsAffected > 0) {
-                // Get the last inserted category ID
-                ResultSet rs = webDB.executeSearch("SELECT LAST_INSERT_ID()");
-                if (rs.next()) {
-                    int lastCategoryID = rs.getInt(1); 
+		try {
+			// Execute the insert query for the Category
+			int rowsAffected = webDB.executeIUD(sqlCategory, category_Name, imgUrl);
 
-                    
-                    String queryCategoryEmployee = "INSERT INTO category_employee (CID, EmID) VALUES (" + lastCategoryID + ", " + ID + ")";
+			if (rowsAffected > 0) {
+				// Get the last inserted category ID
+				ResultSet rs = webDB.executeSearch("SELECT LAST_INSERT_ID()");
+				if (rs.next()) {
+					int lastCategoryID = rs.getInt(1);
 
-                  
-                    int rowsAffected2 = webDB.executeIUD(queryCategoryEmployee);
-                    
-                    
-                    isSuccess = rowsAffected2 > 0;
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+					String sqlCategoryEmployee = "INSERT INTO category_employee (CID, EmID) VALUES (?, ?)";
+					int rowsAffected2 = webDB.executeIUD(sqlCategoryEmployee, lastCategoryID, ID);
 
-        return isSuccess;
-    }
+					isSuccess = rowsAffected2 > 0;
+				}
+				rs.close();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
+		return isSuccess;
+	}
 
-    // Update an existing category
-    public static boolean updateCategory(int CID, String category_Name) {
-        boolean isSuccess = false;
-        String query = "UPDATE Category SET category_Name='" + category_Name + "' WHERE CID=" + CID;
+	// Update an existing category
+	public static boolean updateCategory(int CID, String category_Name) {
+		boolean isSuccess = false;
+		String sql = "UPDATE Category SET category_Name=? WHERE CID=?";
 
-        try {
-            int rowsAffected = webDB.executeIUD(query);  // Execute the update query
-            isSuccess = rowsAffected > 0;  // Check if the update was successful
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return isSuccess;
-    }
+		try {
+			int rowsAffected = webDB.executeIUD(sql, category_Name, CID); // Execute the update query
+			isSuccess = rowsAffected > 0; // Check if the update was successful
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return isSuccess;
+	}
 
-    // Delete a category by ID
-    public static boolean deleteCategory(int CID) {
-        boolean isSuccess = false;
-        String query = "DELETE FROM Category WHERE CID=" + CID;
+	// Delete a category by ID
+	public static boolean deleteCategory(int CID) {
+		boolean isSuccess = false;
+		String sql = "DELETE FROM Category WHERE CID=?";
 
-        try {
-            int rowsAffected = webDB.executeIUD(query);  // Execute the delete query
-            isSuccess = rowsAffected > 0;  // Check if the deletion was successful
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+		try {
+			int rowsAffected = webDB.executeIUD(sql, CID); // Execute the delete query
+			isSuccess = rowsAffected > 0; // Check if the deletion was successful
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
-        return isSuccess;
-    }
+		return isSuccess;
+	}
 }
